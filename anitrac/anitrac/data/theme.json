@@ -1,6 +1,7 @@
 {
-    "even" : "#a7a8a9",
+    "even" : "#a7a8a9", 
     "odd" : "#ffffff",
     "close" : "#fce300",
-    "over" : "#c8102e"
+    "over" : "#c8102e",
+    "selected" : "#43b02a"
 }

@@ -25,7 +25,7 @@ class App(tk.Tk):
         self.mainloop()
 
     def get_server(self):
-        with open('config.json', 'r') as file:
+        with open('data\\config.json', 'r') as file:
             json_data = json.load(file)
             return json_data['server']
 
@@ -90,10 +90,10 @@ class App(tk.Tk):
         if server != '':
             if messagebox.askokcancel(title='Save Server', message=f'Save {server} as new server?'):
                 self.server = server
-                with open('config.json', 'r') as file:
+                with open('data\\config.json', 'r') as file:
                     json_data = json.load(file)
                 json_data['server'] = self.server
-                with open('config.json', 'w') as file:
+                with open('data\\config.json', 'w') as file:
                     file.write(json.dumps(json_data, indent=4))
                 self.new_server.delete(0, 'end')
                 self.current.config(text=f'Current Server: {self.server}')

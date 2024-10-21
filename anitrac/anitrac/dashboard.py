@@ -1,6 +1,7 @@
 from tkinter import ttk, messagebox
 import tkinter as tk
 import requests
+import json
 
 class Dashboard(tk.Frame):
     def __init__(self, width, height, server):
@@ -10,26 +11,26 @@ class Dashboard(tk.Frame):
         self.server = server
         self.create_table()
         self.create_widets()
+        self.update_style()
         self.populate_table()
 
     def create_table(self):
-        self.table = ttk.Treeview(self, columns=('Anilox','Milage', 'Clean Cycles'), show='headings')
+        self.table = ttk.Treeview(self, show='headings')
+        self.table['columns'] = ('Anilox','Milage', 'Clean Cycles')
         self.yscroll = ttk.Scrollbar(self, orient="vertical")
         self.yscroll.config(command=self.table.yview)
         self.table.config(yscrollcommand=self.yscroll.set, selectmode="extended")
-         # Phantom Header
-        self.table.column("#0", width=0, minwidth=0)
-        self.table.heading("#0", text="PID")
+        self.current_sort = 'roller'
+        self.sort_type = 'asc'
+        # Create headers so that each header can run a sort function
+        self.table.heading('Anilox', text='Anilox', command= lambda: self.order_table('roller'))
+        self.table.heading('Milage', text='Milage', command= lambda: self.order_table('milage'))
+        self.table.heading('Clean Cycles', text='Clean Cycles', command= lambda: self.order_table('clean_cycles'))
+        # Center aling data in rows
         for index, col in enumerate(self.table["columns"]):
             self.table.column(col, anchor="center")
-            self.table.heading(col, text=col, anchor="center")
         self.table.place(relx=(5/600), rely=(10/400), relheight=(325/400), relwidth=(580/600))
         self.yscroll.place(relx=(585/600), rely=(10/400), relheight=(325/400), relwidth=(15/600))
-
-        self.table.tag_configure("even", background="#a7a8a9")
-        self.table.tag_configure("odd", background="#ffffff")
-        self.table.tag_configure('close', background='#fce300')
-        self.table.tag_configure('over', background='#c8102e')
 
     def server_check(self):
         try:
@@ -51,16 +52,21 @@ class Dashboard(tk.Frame):
 
     def populate_table(self):
         if self.server_check():
-            endpoint = self.server + '/anilox_list'
+            endpoint = self.server + f'/anilox_list?sort={self.current_sort}&method={self.sort_type}'
             data = requests.get(endpoint).json()
+            self.get_limits()
             for index, record in enumerate(data):
-                if index % 2 == 0:
-                    tag = ('even',)
-                if index % 2 == 1:
-                    tag = ('odd',)
                 roller = record['roller']
                 milage = record['milage']
                 cycles = record['clean_cycles']
+                if index % 2 == 0 and int(milage) < self.warning_limit:
+                    tag = ('even',)
+                elif index % 2 == 1 and int(milage) < self.warning_limit:
+                    tag = ('odd',)
+                elif self.warning_limit < int(milage) < self.limit:
+                    tag = ('close',)
+                else:
+                    tag = ('over',)
                 self.table.insert(
                     parent='', index=index, values=[roller, f'{milage:,}', f'{cycles:,}'],tags=tag)
     
@@ -73,3 +79,36 @@ class Dashboard(tk.Frame):
         """Clean and repopulate table with search filters"""
         self.clear_table()
         self.populate_table()
+        #self.table.config(columns=('Anilox','Footage', 'Clean Cycles'))
+        for index, col in enumerate(self.table["columns"]):
+            self.table.column(col, anchor="center")
+            self.table.heading(col, text=col, anchor="center")
+
+    def order_table(self, method):
+        if method == self.current_sort and self.sort_type == 'asc':
+            self.sort_type = 'desc'
+        elif method == self.current_sort and self.sort_type == 'desc':
+            self.sort_type = 'asc'
+        else:
+            self.sort_type = 'asc'
+            self.current_sort = method
+        self.update_table()
+
+    def get_limits(self):
+        with open('data\\config.json', 'r') as file:
+            json_data = json.load(file)
+            self.limit = int(json_data['milage_limit'])
+            self.warning_limit = float(json_data['close_multiplier']) * self.limit
+    
+    def update_style(self):
+        with open('data\\theme.json', 'r') as file:
+            json_data = json.load(file)
+            style = ttk.Style()
+            self.table.tag_configure("even", background=json_data['even'])
+            self.table.tag_configure("odd", background=json_data['odd'])
+            self.table.tag_configure('close', background=json_data['close'])
+            self.table.tag_configure('over', background=json_data['over'])
+            style.map('Treeview', background=[('selected', json_data['selected'])])
+
+    def clean_anilox(self):
+        self.table.get_children
