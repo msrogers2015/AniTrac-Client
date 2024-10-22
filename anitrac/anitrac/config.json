@@ -1,6 +1,0 @@
-{
-    "server": "http://192.168.1.3:5000",
-    "milage_limit" : "100000",
-    "close_multiplier" : "0.8",
-    "uom" : ["Footage", "ft"]
-}

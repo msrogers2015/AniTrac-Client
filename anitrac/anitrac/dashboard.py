@@ -45,10 +45,22 @@ class Dashboard(tk.Frame):
             return False
 
     def create_widets(self):
-        clean = ttk.Button(self, text='Clean Anilox')
+        clean = ttk.Button(self, text='Clean Anilox', command=self.clean_anilox)
         clean.place(relx=(50/self.w), rely=(350/self.h), relheight=(40/self.h), relwidth=(200/self.w))
         refresh = ttk.Button(self, text='Refresh Table', command=self.update_table)
         refresh.place(relx=(350/self.w), rely=(350/self.h), relheight=(40/self.h), relwidth=(200/self.w))
+    
+    def clean_anilox(self) -> None:
+        try:
+            record = self.table.item(self.table.focus())["values"][0]
+            if messagebox.askokcancel(title='Clean anilox', message=f'Do you want to clean {record}'):
+                if requests.post(self.server+'/clean', json={'roller': record}).status_code == 200:
+                    messagebox.showinfo(title='Anilox Cleaned', message=f'Milage has been resert for anilox {record}')
+                    self.update_table()
+                else:
+                    messagebox.showerror(title='Cleaning Error', message=f'Anilox {record} could not be cleaned.')
+        except IndexError:
+            messagebox.showwarning(title='Invalid Selection', message='Please select an anilox to clean.')
 
     def populate_table(self):
         if self.server_check():
@@ -109,6 +121,3 @@ class Dashboard(tk.Frame):
             self.table.tag_configure('close', background=json_data['close'])
             self.table.tag_configure('over', background=json_data['over'])
             style.map('Treeview', background=[('selected', json_data['selected'])])
-
-    def clean_anilox(self):
-        self.table.get_children
