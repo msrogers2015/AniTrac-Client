@@ -1,6 +1,7 @@
 from tkinter import ttk, messagebox
 import tkinter as tk
 import dashboard
+import record
 import json
 import requests
 
@@ -31,10 +32,11 @@ class App(tk.Tk):
 
     def on_resize(self, event):
         h = self.winfo_height()
-        fontsize = h//40
-        self.style.configure('.', font=(None, fontsize))
-        self.style.configure('Treeview.Heading', font=(None, fontsize))
+        font_size = h//40
+        self.style.configure('.', font=(None, font_size))
+        self.style.configure('Treeview.Heading', font=(None, font_size))
         self.style.configure('Treeview', rowheight=h//20)
+        self.record.on_resize((font_size))
 
     def set_style(self) -> None:
         self.style = ttk.Style()
@@ -47,11 +49,12 @@ class App(tk.Tk):
         self.notebook = ttk.Notebook(self)
         self.notebook.pack(fill='both', side='top', expand=True)
         self.dashboard = dashboard.Dashboard(self.w, self.h, self.server)
+        self.record = record.Record(self.w, self.h, self.server)
         frame2 = ttk.Frame(self.notebook)
         self.dashboard.pack()
-        frame2.pack()
+        self.record.pack()
         self.notebook.add(self.dashboard, text='Dashboard')
-        self.notebook.add(frame2, text='Record Job')
+        self.notebook.add(self.record, text='Record Job')
 
     def create_menu(self):
         menubar = tk.Menu(self)
