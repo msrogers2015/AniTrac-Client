@@ -36,7 +36,7 @@ class App(tk.Tk):
         self.style.configure('.', font=(None, font_size))
         self.style.configure('Treeview.Heading', font=(None, font_size))
         self.style.configure('Treeview', rowheight=h//20)
-        self.record.on_resize((font_size))
+        self.record.on_resize(font_size)
 
     def set_style(self) -> None:
         self.style = ttk.Style()
@@ -44,6 +44,8 @@ class App(tk.Tk):
         self.style.configure('TNotebook.Tab', width=self.winfo_screenwidth())
         self.style.configure('server.TButton', font=(None, 14))
         self.style.configure('Treeview', rowheight=50)
+        self.option_add("*TCombobox*Listbox*Font", (None, 16))
+        self.style.configure('TCombobox', arrowsize=100)
 
     def create_notebook(self) -> None:
         self.notebook = ttk.Notebook(self)
@@ -55,6 +57,12 @@ class App(tk.Tk):
         self.record.pack()
         self.notebook.add(self.dashboard, text='Dashboard')
         self.notebook.add(self.record, text='Record Job')
+        self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_change)
+
+    def on_tab_change(self, event):
+        tab = self.notebook.index(self.notebook.select())
+        if tab == 0:
+            self.dashboard.update_table()
 
     def create_menu(self):
         menubar = tk.Menu(self)

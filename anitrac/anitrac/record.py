@@ -31,6 +31,7 @@ class Record(tk.Frame):
             else:
                 label.place(relx=col2 / self.w, rely=(row1 + (offset * (i // 2))) / self.h, relwidth=w / self.w, relheight=h / self.h)
                 entry.place(relx=col2 / self.w, rely=(row2 + (offset * (i // 2))) / self.h, relwidth=w / self.w, relheight=h / self.h)
+            entry.bind('<FocusOut>', self.verify_data)
             self.entries.append(entry)
 
     def on_resize(self, font_size):
@@ -57,6 +58,27 @@ class Record(tk.Frame):
             messagebox.showerror(title='Uncaught Error', message=f'{e.__class__}\n{e}')
             return False
 
+    def verify_data(self, event):
+        roller = event.widget.get()
+        if roller not in self.anilox_list() and roller != '':
+            event.widget.delete(0, 'end')
+            messagebox.showwarning(title='Invalid Anilox', message='Please select an anilox from the dropdown list.')
+
     def record_milage(self):
-        print(self.milage.get())
-        print([entry.get() for entry in self.entries])
+        rollers = []
+        for unit in self.entries:
+            if unit.get() != '':
+                rollers.append(unit.get())
+        if self.milage.get() == '':
+            messagebox.showwarning('Invalid Milage', 'Please provide a milage.')
+            return False
+        data = {
+            'milage' : self.milage.get(),
+            'rollers' : rollers,
+        }
+        endpoint = self.server + '/add_milage'
+        outcome = requests.post(endpoint, json=data)
+        if outcome.status_code == 200:
+            messagebox.showinfo(title='Milage Recorded', message='Milage has been updated for selected rollers.')
+        else:
+            messagebox.showerror(title=f'Error {outcome.status_code}', message=f'The following error occured:{outcome.json()['message']}')
